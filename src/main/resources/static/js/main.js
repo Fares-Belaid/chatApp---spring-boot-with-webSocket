@@ -23,7 +23,7 @@ function connect(event) {
         usernamePage.classList.add('hidden');
         chatPage.classList.remove('hidden');
 
-        var socket = new SockJS('/chatApp');
+        var socket = new SockJS('/ws');
         stompClient = Stomp.over(socket);
 
         stompClient.connect({}, onConnected, onError);
@@ -37,7 +37,7 @@ function onConnected() {
     stompClient.subscribe('/topic/public', onMessageReceived);
 
     // Tell your username to the server
-    stompClient.send("/app/chat.register",
+    stompClient.send("/app/chat.addUser",
         {},
         JSON.stringify({sender: username, type: 'JOIN'})
     )
@@ -52,17 +52,15 @@ function onError(error) {
 }
 
 
-function send(event) {
+function sendMessage(event) {
     var messageContent = messageInput.value.trim();
-
     if(messageContent && stompClient) {
         var chatMessage = {
             sender: username,
             content: messageInput.value,
             type: 'CHAT'
         };
-
-        stompClient.send("/app/chat.send", {}, JSON.stringify(chatMessage));
+        stompClient.send("/app/chat.sendMessage", {}, JSON.stringify(chatMessage));
         messageInput.value = '';
     }
     event.preventDefault();
@@ -112,10 +110,9 @@ function getAvatarColor(messageSender) {
     for (var i = 0; i < messageSender.length; i++) {
         hash = 31 * hash + messageSender.charCodeAt(i);
     }
-
     var index = Math.abs(hash % colors.length);
     return colors[index];
 }
 
 usernameForm.addEventListener('submit', connect, true)
-messageForm.addEventListener('submit', send, true)
+messageForm.addEventListener('submit', sendMessage, true)
